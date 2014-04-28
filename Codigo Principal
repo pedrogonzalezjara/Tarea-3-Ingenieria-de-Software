@@ -1,0 +1,59 @@
+#include <stdio.h>
+#include <libpq-fe.h>
+#include <string.h>
+
+int main(int argc, char *argv[])
+{
+PGconn *conn;
+PGresult *res;
+int i,j,entrada;
+for (i = 0; i < argc ; i++)
+{
+        if(strcmp(argv[i],"-r")==0) entrada = 1;
+        if(strcmp(argv[i],"-bh")==0) entrada = 2;
+        if(strcmp(argv[i],"-v")==0) entrada = 3;
+}
+conn = PQsetdbLogin("sebastian.cl","5432",NULL,NULL,"iswdb","isw","isw");
+if (entrada == 1)
+{
+	if (PQstatus(conn) != CONNECTION_BAD)
+	{
+		res = PQexec(conn, "SELECT tienda, SUM(monto) FROM ventas GROUP BY tienda;");
+		if (res != NULL && PGRES_TUPLES_OK == PQresultStatus(res))
+		{
+			for (i = PQntuples(res)-1; i >= 0; i--)
+			{		
+				for (j = PQnfields(res)-1; j >= 0; j--)
+				printf("%s\t",PQgetvalue(res,i,j));
+				printf("\n");
+			}	
+			PQclear(res);
+		}
+	}
+	
+}
+if (entrada == 2)
+    { 
+                if (PQstatus(conn) != CONNECTION_BAD) 
+                { 
+                                  res = PQexec(conn, "SELECT tienda, MAX(monto) FROM ventas WHERE monto in(SELECT AVG(monto) FROM ventas GROUP BY tienda, (EXTRACT(HOUR FROM fecha)))GROUP BY tienda;");
+                                   if (res != NULL && PGRES_TUPLES_OK == PQresultStatus(res)) 
+                                   { 
+                                           for (i = PQntuples(res)-1; i >= 0; i--) 
+                                           { 
+                                               for (j = PQnfields(res)-1; j >= 0; j--) 
+                                                   printf("%s\t",PQgetvalue(res,i,j)); printf("\n"); 
+                                           } 
+                                           PQclear(res); 
+                                   } 
+                } 
+    }
+else if (entrada == 3)
+{
+	printf("\nIntegrantes:\n\nPedro Gonzalez\nCamilo Candia\nAndres Mardones\n\n");
+ 	printf("Fecha de compilacion: ");
+    puts(__DATE__); 
+}
+PQfinish(conn);
+return 0;
+}
